@@ -11,6 +11,7 @@ class Conversation extends Model
 
     protected $fillable = [
         'subject',
+        'property_id',
         'is_archived',
     ];
 
@@ -33,6 +34,11 @@ class Conversation extends Model
         return $this->belongsToMany(User::class, 'conversation_participants');
     }
 
+    public function property()
+    {
+        return $this->belongsTo(Property::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_archived', false);
@@ -41,5 +47,10 @@ class Conversation extends Model
     public function getLastMessageAttribute()
     {
         return $this->messages()->latest()->first();
+    }
+    
+    public function lastMessage()
+    {
+        return $this->hasOne(Message::class)->latest();
     }
 }

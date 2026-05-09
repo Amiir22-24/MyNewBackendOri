@@ -9,75 +9,72 @@ class PaymentTransactionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Subscription ID=1 for Agent 2
+        // Subscription for Agent 2
         DB::table('subscriptions')->insert([
-            'id' => 1,
+            // Fixed ID removed for safe re-seeding
             'user_id' => 2,
-            'plan_name' => 'Premium Agent',
-            'price' => 50000,
-            'currency' => 'XOF',
+            'stripe_subscription_id' => 'sub_test_12345',
+            'amount' => 50000.00,
             'status' => 'active',
-            'start_date' => now()->subMonths(2),
-            'end_date' => now()->addMonths(10),
+            'ends_at' => now()->addMonths(10),
             'created_at' => now()->subMonths(2),
             'updated_at' => now(),
         ]);
+        $subscriptionId = DB::getPdo()->lastInsertId();
 
-        // Payment ID=1 for subscription
+        // Payment for subscription
         DB::table('payments')->insert([
-            'id' => 1,
+            // Fixed ID removed
             'user_id' => 2,
-            'subscription_id' => 1,
-            'transaction_id' => 'TXN-2025-001',
-            'amount' => 50000,
-            'currency' => 'XOF',
-            'payment_method' => 'mobile_money',
-            'status' => 'success',
+            'subscription_id' => $subscriptionId,
+            'stripe_charge_id' => 'ch_test_12345',
+            'amount' => 50000.00,
+            'status' => 'succeeded',
             'created_at' => now()->subMonths(2),
             'updated_at' => now(),
         ]);
+        $paymentId = DB::getPdo()->lastInsertId();
 
-        // Transaction ID=1 - Commission for Agent
+        // Transaction - Commission for Agent
         DB::table('transactions')->insert([
-            'id' => 1,
+            // Fixed ID removed
             'user_id' => 2,
             'property_id' => 1,
-            'type' => 'commission',
-            'amount' => 25000,
+            'amount' => 25000.00,
             'currency' => 'XOF',
-            'status' => 'completed',
-            'description' => 'Commission 10% location Property 1',
+            'stripe_payment_intent_id' => null,
+            'status' => 'succeeded',
+            'type' => 'commission',
             'created_at' => now()->subDay(),
             'updated_at' => now(),
         ]);
+        $transactionId = DB::getPdo()->lastInsertId();
 
-        // Commission ID=1
+        // Commission 
         DB::table('commissions')->insert([
-            'id' => 1,
+            // Fixed ID removed
             'agent_id' => 2,
             'property_id' => 1,
-            'occupancy_contract_id' => 1,
-            'amount' => 25000,
-            'currency' => 'XOF',
-            'rate' => 10.0,
+            'transaction_id' => $transactionId,
+            'amount' => 25000.00,
+            'rate' => 10.00,
             'status' => 'paid',
             'created_at' => now()->subDay(),
             'updated_at' => now(),
         ]);
 
-        // Receipt ID=1
+        // Receipt 
         DB::table('receipts')->insert([
-            'id' => 1,
-            'transaction_id' => 1,
+            // Fixed ID removed
             'user_id' => 2,
-            'amount' => 25000,
-            'currency' => 'XOF',
+            'transaction_id' => $transactionId,
             'receipt_number' => 'REC-2025-001',
-            'status' => 'issued',
+            'pdf_url' => 'receipts/REC-2025-001.pdf',
+            'amount' => 25000.00,
             'created_at' => now()->subDay(),
             'updated_at' => now(),
         ]);
 
-        echo "✅ Paiements/Transactions: Sub1(Agent2), Payment1, Transaction1, Commission1, Receipt1\n";
+        echo "✅ Paiements/Transactions créés (Sub:{$subscriptionId}, Trans:{$transactionId})\n";
     }
 }

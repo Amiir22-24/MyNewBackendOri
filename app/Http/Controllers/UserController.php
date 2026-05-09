@@ -49,19 +49,41 @@ class UserController extends Controller
     public function show(Request $request, $id)
     {
         $user = $request->user();
-        $target = User::with(['agentProfile', 'ownerProfile', 'properties'])->findOrFail($id);
+        $target = User::with(['agentProfile', 'ownerProfile'])->findOrFail($id);
 
-        if (!$user->is_admin && $target->id !== $user->id) {
+        if ($user->is_admin || (int) $target->id === (int) $user->id) {
+            $target->loadCount('properties');
+
+            return response()->json([
+                'success' => true,
+                'data' => $target,
+            ]);
+        }
+
+        if (! in_array($target->user_type, ['owner', 'agent'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Non autorisé',
-                'error_type' => 'forbidden'
+                'error_type' => 'forbidden',
             ], 403);
+        }
+
+        $payload = $target->only([
+            'id', 'first_name', 'last_name', 'avatar', 'city', 'region', 'address',
+            'phone', 'user_type', 'matricule',
+        ]);
+
+        if ($target->user_type === 'owner') {
+            $payload['owner_profile'] = $target->ownerProfile;
+        }
+        if ($target->user_type === 'agent') {
+            $payload['agent_profile'] = $target->agentProfile;
         }
 
         return response()->json([
             'success' => true,
-            'data' => $target
+            'data' => $payload,
+            'visibility' => 'public',
         ]);
     }
 
@@ -77,13 +99,17 @@ class UserController extends Controller
             return response()->json(['success' => false, 'message' => 'Non autorisé'], 403);
         }
 
-        $validator = Validator::make($request->all(), [
+        $rules = [
             'first_name' => 'sometimes|string|max:255',
             'last_name' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:20',
             'address' => 'sometimes|string|max:500',
-            'status' => 'sometimes|in:pending,validated,rejected|required_if_admin',
-        ]);
+        ];
+        if ($user->is_admin) {
+            $rules['status'] = 'sometimes|in:validated,inactive';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
@@ -103,9 +129,28 @@ class UserController extends Controller
         ]);
     }
 
-    // destroy method for admin soft-delete, etc.
     public function destroy(Request $request, $id)
     {
-        // similar pattern...
+        if (!$request->user()->is_admin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès refusé. Admin seulement.',
+            ], 403);
+        }
+
+        $target = User::findOrFail($id);
+        if ((int) $target->id === (int) $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de supprimer votre propre compte.',
+            ], 403);
+        }
+
+        $target->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Utilisateur supprimé',
+        ]);
     }
 }

@@ -13,20 +13,29 @@ class OccupancyRequest extends Model
     protected $fillable = [
         'property_id',
         'client_id',
+        'owner_id',
         'agent_id',
         'proposed_amount',
+        'rent_amount',
+        'currency',
+        'message',
         'start_date',
         'end_date',
         'status',
         'rejection_reason',
-        'validation_notes',
+        'rejected_by',
+        'agent_notes',
+        'agent_validated_at',
+        'contract_url',
     ];
 
     protected $casts = [
-        'proposed_amount' => 'decimal:2',
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'status' => 'string',
+        'proposed_amount'    => 'decimal:2',
+        'rent_amount'        => 'decimal:2',
+        'start_date'         => 'date',
+        'end_date'           => 'date',
+        'agent_validated_at' => 'datetime',
+        'status'             => 'string',
     ];
 
     public function property()
@@ -57,5 +66,12 @@ class OccupancyRequest extends Model
             'rejected' => 'Rejetée',
             default => $this->status
         };
+    }
+
+    public function getContractUrlAttribute($value)
+    {
+        if (!$value) return null;
+        if (preg_match('#^https?://#i', $value)) return $value;
+        return asset('storage/' . ltrim($value, '/'));
     }
 }

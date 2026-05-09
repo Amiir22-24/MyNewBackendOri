@@ -3,93 +3,59 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ChangePasswordRequest;
+use App\Http\Resources\UserResource;
+use App\Services\AuthService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    protected AuthService $authService;
+
+    public function __construct(AuthService $authService)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
-        ]);
+        $this->authService = $authService;
+    }
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation échouée',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
+    /**
+     * Login user with email/matricule and password
+     */
+    public function login(LoginRequest $request)
+    {
+        $user = $this->authService->login(
+            $request->validated()['email'],
+            $request->validated()['password']
+        );
 
-        $credentials = $request->only('email', 'password');
-
-        $user = User::where('email', $request->email)->first();
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Email non trouvé',
+                'message' => $user === null ? 'Identifiant ou mot de passe incorrect' : 'Compte non accessible',
             ], 401);
         }
 
-        // Vérifications métier (status, matricule) - garde la logique existante
-        // Exemple : if ($user->status !== 'validated' || !$user->matricule) { 401 'Compte non validé' }
-
-        if (!Auth::attempt($credentials)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Mot de passe incorrect',
-            ], 401);
-        }
-
-        $user = Auth::user();
+        $user = $this->authService->loadUserProfile($user);
         $token = $user->createToken('api')->plainTextToken;
 
         return response()->json([
             'success' => true,
             'message' => 'Connexion réussie',
             'data' => [
-                'user' => $user,
+                'user' => UserResource::make($user),
                 'token' => $token,
                 'token_type' => 'Bearer',
             ],
         ]);
     }
 
-    public function register(Request $request)
+    /**
+     * Register a new user
+     */
+    public function register(RegisterRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'phone' => 'required|string',
-            'password' => 'required|string|min:6|confirmed',
-            'user_type' => 'required|in:agent,owner',
-            // autres champs optionnels
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation échouée',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-            'user_type' => $request->user_type,
-            'status' => 'pending',
-            'matricule' => $request->matricule ?? null,
-            // autres champs
-        ]);
+        $user = $this->authService->register($request->validated());
 
         $token = $user->createToken('api')->plainTextToken;
 
@@ -97,14 +63,16 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Inscription réussie',
             'data' => [
-                'user' => $user,
+                'user' => UserResource::make($user),
                 'token' => $token,
                 'token_type' => 'Bearer',
-                'auto_validated' => in_array($user->user_type, ['agent', 'owner']),
             ],
         ], 201);
     }
 
+    /**
+     * Logout user
+     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -115,48 +83,131 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Get current user profile
+     */
     public function me(Request $request)
     {
+        $user = $this->authService->loadUserProfile($request->user());
+
         return response()->json([
             'success' => true,
-            'data' => $request->user(),
+            'data' => UserResource::make($user),
         ]);
     }
 
+    /**
+     * Refresh authentication token
+     */
     public function refreshToken(Request $request)
     {
-        $user = $request->user();
-        $user->tokens()->delete();  // Revoke all tokens
-        $token = $user->createToken('api')->plainTextToken;
+        // On récupère le token depuis le header Authorization (Bearer <token>)
+        $token = $request->bearerToken();
+        
+        if (!$token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token absente',
+            ], 401);
+        }
+
+        // On cherche le token dans la base (Sanctum::findToken)
+        // Cela permet de retrouver l'utilisateur même si la route n'est pas protégée
+        $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+
+        if (!$accessToken) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token invalide ou introuvable',
+            ], 401);
+        }
+
+        $user = $accessToken->tokenable;
+        
+        // Supprimer tous les tokens précédents (comportement d'origine)
+        $user->tokens()->delete();
+        
+        // Générer un nouveau token
+        $newToken = $user->createToken('api')->plainTextToken;
 
         return response()->json([
             'success' => true,
             'data' => [
-                'token' => $token,
+                'token' => $newToken,
                 'token_type' => 'Bearer',
             ],
         ]);
     }
 
-    // Autres méthodes gardées pour future implémentation
+    /**
+     * Update user profile
+     */
     public function updateProfile(Request $request)
     {
-        return response()->json(['message' => 'TODO: Update profile']);
+        $validated = $request->validate([
+            'first_name' => 'sometimes|required|string|max:255',
+            'last_name' => 'sometimes|required|string|max:255',
+            'phone' => 'sometimes|required|string|max:30',
+            'address' => 'nullable|string|max:500',
+            'city' => 'nullable|string|max:100',
+            'region' => 'nullable|string|max:100',
+            'avatar' => 'nullable|string|max:2048',
+        ]);
+
+        $user = $this->authService->updateProfile($request->user(), $validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil mis à jour',
+            'data' => UserResource::make($user),
+        ]);
     }
 
-    public function changePassword(Request $request)
+    /**
+     * Change user password
+     */
+    public function changePassword(ChangePasswordRequest $request)
     {
-        return response()->json(['message' => 'TODO: Change password']);
+        $validated = $request->validated();
+        $success = $this->authService->changePassword(
+            $request->user(),
+            $validated['current_password'],
+            $validated['new_password']
+        );
+
+        if (!$success) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mot de passe actuel incorrect',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mot de passe modifié',
+        ]);
     }
 
+    /**
+     * Request password reset
+     */
     public function forgotPassword(Request $request)
     {
-        return response()->json(['message' => 'TODO: Forgot password']);
+        return response()->json([
+            'success' => false,
+            'message' => 'Non implémenté : configurer l\'envoi d\'email (lien de réinitialisation).',
+        ], 501);
     }
 
+    /**
+     * Reset password with token
+     */
     public function resetPassword(Request $request)
     {
-        return response()->json(['message' => 'TODO: Reset password']);
+        return response()->json([
+            'success' => false,
+            'message' => 'Non implémenté : utiliser un token de reset valide.',
+        ], 501);
     }
 }
 

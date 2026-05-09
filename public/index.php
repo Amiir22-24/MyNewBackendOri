@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
+ini_set('max_execution_time', 300); // Fix bootstrap timeout on XAMPP
+
 define('LARAVEL_START', microtime(true));
 
 // Determine if the application is in maintenance mode...
@@ -18,3 +20,4 @@ require __DIR__.'/../vendor/autoload.php';
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
 $app->handleRequest(Request::capture());
+

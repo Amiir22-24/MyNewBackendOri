@@ -13,7 +13,7 @@ class AdminSeeder extends Seeder
     {
         // Super Admin - ID=1 pour tests
         DB::table('users')->insert([
-            'id' => 1,
+            // Fixed ID removed for safe re-seeding
             'first_name' => 'Super',
             'last_name' => 'Admin',
             'email' => 'admin@ori.com',
@@ -22,12 +22,15 @@ class AdminSeeder extends Seeder
             'user_type' => 'admin',
             'status' => 'validated',
             'avatar' => 'https://ui-avatars.com/api/?name=Admin&background=1e88e5&color=fff&size=128&bold=true',
-            'validation_notes' => 'Super Admin système',
-            'validated_at' => now(),
-            'created_at' => now(),
+'validation_notes' => 'Super Admin système',
+            'matricule' => 'ADMIN-001',  // FIXED: Required for login
+            'is_admin' => true,
+
             'updated_at' => now(),
         ]);
+
 
         echo "✅ Admin créé (ID=1): admin@ori.com / password123\n";
     }
 }
+

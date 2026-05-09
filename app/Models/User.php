@@ -89,6 +89,16 @@ class User extends Authenticatable
         return $this->hasMany(OccupancyRequest::class, 'client_id');
     }
 
+    public function propertyFavorites()
+    {
+        return $this->hasMany(PropertyFavorite::class);
+    }
+
+    public function favoriteProperties()
+    {
+        return $this->belongsToMany(Property::class, 'property_favorites')->withTimestamps();
+    }
+
     public function occupancyContractsAsTenant()
     {
         return $this->hasMany(OccupancyContract::class, 'tenant_id');
@@ -154,9 +164,9 @@ class User extends Authenticatable
     {
         return match($this->status) {
             'pending' => 'En attente',
-            'validated' => 'Validé',
+            'validated' => 'Actif',
             'rejected' => 'Rejeté',
-            'inactive' => 'Inactif',
+            'inactive' => 'Désactivé',
             default => 'Inconnu'
         };
     }

@@ -16,11 +16,16 @@ class Payment extends Model
         'stripe_charge_id',
         'amount',
         'status',
+        'payment_method',
+        'payment_type',
+        'external_reference',
+        'metadata',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'status' => 'string',
+        'metadata' => 'array',
     ];
 
     public function user()

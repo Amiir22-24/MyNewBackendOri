@@ -10,6 +10,22 @@ use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
+    public function me(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->user_type === 'agent') {
+            $user->load('agentProfile');
+        } elseif ($user->user_type === 'owner') {
+            $user->load('ownerProfile');
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $user,
+        ]);
+    }
+
     /**
      * Artisan: php artisan make:controller Api/ProfileController --api
      * Update agent profile (agent or admin)
@@ -31,7 +47,6 @@ class ProfileController extends Controller
         $validator = Validator::make($request->all(), [
             'commission_rate' => 'required|numeric|min:0|max:50',
             'phone' => 'sometimes|string|max:20',
-            'validation_status' => 'sometimes|in:pending,validated,rejected', // admin only
         ]);
 
         if ($validator->fails()) {

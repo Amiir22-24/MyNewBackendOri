@@ -11,22 +11,26 @@ class OccupancyContract extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'occupancy_request_id',
         'property_id',
         'tenant_id',
         'owner_id',
         'agent_id',
         'monthly_rent',
+        'deposit_amount',
+        'signed_at',
         'start_date',
         'end_date',
         'contract_url',
         'is_active',
-        'validation_notes',
     ];
 
     protected $casts = [
         'monthly_rent' => 'decimal:2',
+        'deposit_amount' => 'decimal:2',
         'start_date' => 'date',
         'end_date' => 'date',
+        'signed_at' => 'datetime',
         'is_active' => 'boolean',
     ];
 
@@ -58,5 +62,12 @@ class OccupancyContract extends Model
     public function getRemainingDaysAttribute()
     {
         return $this->end_date->diffInDays(now());
+    }
+
+    public function getContractUrlAttribute($value)
+    {
+        if (!$value) return null;
+        if (preg_match('#^https?://#i', $value)) return $value;
+        return asset('storage/' . ltrim($value, '/'));
     }
 }

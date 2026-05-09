@@ -28,6 +28,7 @@ return new class extends Migration
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->text('rejection_reason')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['status', 'property_id']);
         });

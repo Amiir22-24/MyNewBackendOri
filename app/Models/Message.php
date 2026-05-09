@@ -11,10 +11,11 @@ class Message extends Model
 
     protected $fillable = [
         'conversation_id',
-        'user_id',
-        'content',
+        'sender_id',
+        'message',
         'attachments',
         'is_read',
+        'type',
     ];
 
     protected $casts = [
@@ -27,9 +28,14 @@ class Message extends Model
         return $this->belongsTo(Conversation::class);
     }
 
+    public function sender()
+    {
+        return $this->belongsTo(User::class, 'sender_id');
+    }
+
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->sender();
     }
 
     public function scopeUnread($query)
