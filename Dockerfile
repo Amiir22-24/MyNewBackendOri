@@ -33,4 +33,6 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/apache2.conf
 EXPOSE ${PORT}
 
 # Lancement d'Apache en premier plan
-CMD ["apache2-foreground"]
+# CMD ["apache2-foreground"]
+# Remplace CMD ["apache2-foreground"] par :
+CMD php artisan serve --host=0.0.0.0 --port=10000
