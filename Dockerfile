@@ -25,6 +25,10 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Nettoyage et optimisation
 RUN php artisan config:clear
 
+# Pointer le DocumentRoot vers le dossier public de Laravel
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/apache2.conf
+
 # Render utilise la variable $PORT (souvent 10000)
 EXPOSE ${PORT}
 
