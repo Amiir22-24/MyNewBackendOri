@@ -5,22 +5,25 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
         Schema::table('occupancy_requests', function (Blueprint $table) {
-            // Colonnes manquantes pour le workflow multi-étapes
-            $table->timestamp('agent_validated_at')->nullable()->after('agent_notes');
-            $table->unsignedBigInteger('rejected_by')->nullable()->after('rejection_reason');
-            $table->foreign('rejected_by')->references('id')->on('users')->nullOnDelete();
+            // Ajout des nouvelles colonnes si elles n'existent pas
+            if (!Schema::hasColumn('occupancy_requests', 'agent_validated_at')) {
+                $table->timestamp('agent_validated_at')->nullable();
+            }
+            if (!Schema::hasColumn('occupancy_requests', 'rejected_by')) {
+                $table->unsignedBigInteger('rejected_by')->nullable();
+            }
         });
 
-        // Élargir l'enum status pour inclure les nouveaux statuts du workflow
-        DB::statement("ALTER TABLE occupancy_requests MODIFY COLUMN status ENUM('pending', 'pending_agent', 'pending_owner', 'approved', 'rejected', 'cancelled') DEFAULT 'pending'");
+        // Correction de la colonne status pour Postgres
+        DB::statement("ALTER TABLE occupancy_requests ALTER COLUMN status TYPE VARCHAR(255)");
+        DB::statement("ALTER TABLE occupancy_requests ALTER COLUMN status SET DEFAULT 'pending'");
     }
 
     /**
