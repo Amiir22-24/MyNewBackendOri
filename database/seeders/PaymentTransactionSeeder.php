@@ -10,7 +10,7 @@ class PaymentTransactionSeeder extends Seeder
     public function run(): void
     {
         // Subscription for Agent 2
-        DB::table('subscriptions')->insert([
+        DB::table('subscriptions')->updateOrInsert([
             // Fixed ID removed for safe re-seeding
             'user_id' => 2,
             'stripe_subscription_id' => 'sub_test_12345',
@@ -23,7 +23,7 @@ class PaymentTransactionSeeder extends Seeder
         $subscriptionId = DB::getPdo()->lastInsertId();
 
         // Payment for subscription
-        DB::table('payments')->insert([
+        DB::table('payments')->updateOrInsert([
             // Fixed ID removed
             'user_id' => 2,
             'subscription_id' => $subscriptionId,
@@ -36,7 +36,7 @@ class PaymentTransactionSeeder extends Seeder
         $paymentId = DB::getPdo()->lastInsertId();
 
         // Transaction - Commission for Agent
-        DB::table('transactions')->insert([
+        DB::table('transactions')->updateOrInsert([
             // Fixed ID removed
             'user_id' => 2,
             'property_id' => 1,
@@ -51,7 +51,7 @@ class PaymentTransactionSeeder extends Seeder
         $transactionId = DB::getPdo()->lastInsertId();
 
         // Commission 
-        DB::table('commissions')->insert([
+        DB::table('commissions')->updateOrInsert([
             // Fixed ID removed
             'agent_id' => 2,
             'property_id' => 1,

@@ -10,7 +10,7 @@ class OccupancySeeder extends Seeder
     public function run(): void
     {
         // OccupancyRequest ID=1 for Property 1 by Client 4
-        DB::table('occupancy_requests')->insert([
+        DB::table('occupancy_requests')->updateOrInsert([
             'id' => 1,
             'property_id' => 1,
             'client_id' => 4,
@@ -28,7 +28,7 @@ class OccupancySeeder extends Seeder
         ]);
 
         // OccupancyContract ID=1 linked to request 1
-        DB::table('occupancy_contracts')->insert([
+        DB::table('occupancy_contracts')->updateOrInsert([
             'id' => 1,
             'occupancy_request_id' => 1,
             'property_id' => 1,
@@ -47,7 +47,7 @@ class OccupancySeeder extends Seeder
         ]);
 
         // Request 2 - Pending
-        DB::table('occupancy_requests')->insert([
+        DB::table('occupancy_requests')->updateOrInsert([
             'id' => 2,
             'property_id' => 4,
             'client_id' => 4,

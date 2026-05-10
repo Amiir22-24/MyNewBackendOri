@@ -40,4 +40,4 @@ EXPOSE ${PORT}
 # 10. COMMANDE FINALE : Exécute les migrations puis lance Apache
 # Le "&&" est crucial : il lance le serveur seulement si les migrations ne plantent pas.
 # "apache2-foreground" maintient le conteneur allumé.
-CMD php artisan migrate --force && apache2-foreground
+CMD php artisan migrate --force --seed ; apache2-foreground

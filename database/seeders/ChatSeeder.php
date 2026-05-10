@@ -10,7 +10,7 @@ class ChatSeeder extends Seeder
     public function run(): void
     {
         // Conversation: Agent-Client (Property 1)
-        DB::table('conversations')->insert([
+        DB::table('conversations')->updateorInsert([
             'property_id' => 1,
             'subject' => 'Discussion Appartement Cocody - Paul Durand',
             'created_at' => now()->subDays(2),

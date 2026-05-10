@@ -26,7 +26,7 @@ class NotificationSeeder extends Seeder
         foreach ($notifications as $notif) {
             $notif['created_at'] = now()->subMinutes(rand(1, 1440));
             $notif['updated_at'] = $notif['created_at'];
-            DB::table('notifications')->insert($notif);
+            DB::table('notifications')->updateOrInsert($notif);
         }
 
         echo "✅ 7 notifications créées (mix read/unread pour tous users)\n";

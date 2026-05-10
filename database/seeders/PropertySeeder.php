@@ -134,7 +134,7 @@ class PropertySeeder extends Seeder
                 'title' => 'Bureau Zone 4',
                 'description' => 'Bureau professionnel climatisé',
                 'catalog_type' => 'commercial',
-'property_type' => 'bureau',
+                'property_type' => 'bureau',
                 'operation_type' => 'rent',
                 'price' => 500000.00,
                 'currency' => 'XOF',
@@ -171,8 +171,8 @@ class PropertySeeder extends Seeder
                 'id' => 5,
                 'title' => 'Terrain constructible Bingerville',
                 'description' => 'Terrain de 500m² viabilisé',
-'catalog_type' => 'project',
-'property_type' => 'land',
+                'catalog_type' => 'project',
+                'property_type' => 'land',
                 'operation_type' => 'sale',
                 'price' => 15000000.00,
                 'currency' => 'XOF',
@@ -207,7 +207,7 @@ class PropertySeeder extends Seeder
         ];
 
         foreach ($properties as $property) {
-            DB::table('properties')->insert($property);
+            DB::table('properties')->updateOrInsert($property);
         }
 
         echo "✅ 5 propriétés créées (IDs 1-5) pour toutes sections\n";

@@ -11,8 +11,8 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Agent - ID=2
-        DB::table('users')->insert([
-// Fixed ID removed for safe re-seeding
+        DB::table('users')->updateOrInsert([
+            // Fixed ID removed for safe re-seeding
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
             'email' => 'agent@ori.com',
@@ -32,8 +32,8 @@ class UserSeeder extends Seeder
         ]);
 
         // Owner - ID=3
-        DB::table('users')->insert([
-// Fixed ID removed for safe re-seeding
+        DB::table('users')->updateOrInsert([
+            // Fixed ID removed for safe re-seeding
             'first_name' => 'Marie',
             'last_name' => 'Martin',
             'email' => 'owner@ori.com',
@@ -53,8 +53,8 @@ class UserSeeder extends Seeder
         ]);
 
         // Client - ID=4
-        DB::table('users')->insert([
-// Fixed ID removed for safe re-seeding
+        DB::table('users')->updateOrInsert([
+            // Fixed ID removed for safe re-seeding
             'first_name' => 'Paul',
             'last_name' => 'Durand',
             'email' => 'client@ori.com',
