@@ -213,6 +213,15 @@ class AdminController extends Controller
             'is_active' => true,
         ]);
 
+        // In-app Notification
+        Notification::create([
+            'user_id' => $agent->id,
+            'type'    => 'agent_registered',
+            'title'   => 'Compte Agent créé',
+            'message' => 'Bienvenue, votre compte agent a été créé avec succès par un administrateur.',
+            'is_read' => false,
+        ]);
+
         // Send matricule email
         Mail::to($agent->email)->send(new \App\Mail\MatriculeMail($agent, $matricule));
 

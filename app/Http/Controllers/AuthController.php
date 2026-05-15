@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
@@ -58,6 +59,15 @@ class AuthController extends Controller
         $user = $this->authService->register($request->validated());
 
         $token = $user->createToken('api')->plainTextToken;
+
+        // Notification d'inscription réussie
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'registration_success',
+            'title' => 'Bienvenue sur Orizon',
+            'message' => 'Votre inscription a été validée avec succès.',
+            'is_read' => false,
+        ]);
 
         return response()->json([
             'success' => true,

@@ -109,11 +109,13 @@ class OccupancyController extends Controller
         } elseif ($request->has('owner_id')) {
             $query->where('owner_id', $request->owner_id);
         } else {
-            $query->where(function ($q) use ($user) {
-                $q->where('client_id', $user->id)
-                  ->orWhere('agent_id', $user->id)
-                  ->orWhere('owner_id', $user->id);
-            });
+            if (!$user->is_admin) {
+                $query->where(function ($q) use ($user) {
+                    $q->where('client_id', $user->id)
+                      ->orWhere('agent_id', $user->id)
+                      ->orWhere('owner_id', $user->id);
+                });
+            }
         }
 
         if ($request->has('status')) {
@@ -325,6 +327,18 @@ class OccupancyController extends Controller
             'data'    => ['contract_id' => $contract->id],
             'is_read' => false,
         ]);
+
+        // Notifier l'agent s'il y en a un
+        if ($occupancyRequest->agent_id) {
+            Notification::create([
+                'user_id' => $occupancyRequest->agent_id,
+                'type'    => 'property_occupied_agent',
+                'title'   => 'Contrat finalisé !',
+                'message' => 'Une de vos propriétés a été validée et le contrat a été créé.',
+                'data'    => ['contract_id' => $contract->id, 'property_id' => $occupancyRequest->property_id],
+                'is_read' => false,
+            ]);
+        }
 
         // Retourner avec status textuel pour les badges Flutter
         $contractData = $contract->load(['property', 'tenant', 'owner', 'agent'])->toArray();
